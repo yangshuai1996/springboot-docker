@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: springboot-docker
+  ##### 数据库读写分离
+  shardingsphere:
+    props:
+      #### 打印sql
+      sql:
+        show: true
+    masterslave:
+      name: ms
+      master-data-source-name: master
+      slave-data-source-names: slave
+      #配置slave节点的负载均衡均衡策略,采用轮询机制
+      load-balance-algorithm-type: round_robin
+    datasource:
+      names: master,slave
+      master:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://192.168.186.128:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=Asia/Shanghai
+        username: root
+        password: 123456
+        maxPoolSize: 100
+        minPoolSize: 5
+      slave:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://192.168.186.129:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=Asia/Shanghai
+        username: root
+        password: 123456
+        maxPoolSize: 100
+        minPoolSize: 5
+  ##### redis数据库的配置
+  redis:
+    host: 192.168.186.128
+    port: 6379
+  #####  详细队列的配置
+  kafka:
+    producer:
+      retries: 0
+      acks: 1
+      batch-size: 16384
+      buffer-memory: 33554432
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      bootstrap-servers: 192.168.186.128:9092
+    consumer:
+      group-id: javagroup
+      enable-auto-commit: true
+      auto-commit-interval: 100
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      bootstrap-servers: 192.168.186.128:9092
+  main:
+    allow-bean-definition-overriding: true
+#### mybatis-plus
+mybatis-plus:
+  mapper-locations: mapper/*.xml
+server:
+  port: 8888

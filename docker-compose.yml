@@ -1,0 +1,76 @@
+services:
+  microservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: springboot-docker
+    ports:
+    - 8888:8888
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - ys
+  mysql:
+    image: mysql:8.0
+    command: -authentication_policy=mysql_native_password
+    restart: always
+    container_name: mysql
+    volumes:
+      #映射mysql的数据目录到宿主机，保存数据
+      - ./data:/var/lib/mysql
+      #根据宿主机下的配置文件创建容器
+      - ./conf/my.cnf:/etc/mysql/my.cnf
+      - ./sql:/docker-entrypoint-initdb.d/
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456 #设置root帐号密码
+      MYSQL_DATABASE: db01
+      MYSQL_USER: ys
+      MYSQL_PASS: 123456
+      TZ: Asia/Shanghai
+    ports:
+      - 3306:3306
+    networks:
+      - ys
+  zookeeper:
+    image: docker.io/bitnami/zookeeper:3.8
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - ys
+  kafka:
+    image: docker.io/bitnami/kafka:3.2
+    ports:
+      - "9092:9092"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://192.168.186.128:9092
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+    networks:
+      - ys
+  redis:
+    container_name: redis
+    image: redis:6.2.7
+    volumes:
+     - ./redis/conf:/usr/local/etc/redis
+     - ./redis/data:/data
+    ports:
+    - 6379:6379
+    networks:
+      - ys
+networks:
+  ys:
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
